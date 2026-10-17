@@ -41,6 +41,51 @@ syscall_init (void) {
 void
 syscall_handler (struct intr_frame *f UNUSED) {
 	// TODO: Your implementation goes here.
+	uint64_t sys_num = f->R.rax;
+
+	switch (sys_num) {
+	case SYS_HALT:
+		break;
+	case SYS_EXIT:
+		break;
+	case SYS_FORK:
+		break;
+	case SYS_EXEC:
+		break;
+	case SYS_WAIT:
+		break;
+	case SYS_CREATE:
+		break;
+	case SYS_REMOVE:
+		break;
+	case SYS_OPEN:
+		break;
+	case SYS_FILESIZE:
+		break;
+	case SYS_READ:
+		break;
+	case SYS_WRITE:
+		int fd = f->R.rdi;
+		char *buffer = f->R.rsi;
+		unsigned size = f->R.rdx;
+
+		if (!is_user_vaddr(buffer) || fd != 1) {
+			exit(-1);
+		}
+
+		putbuf(buffer, size);
+		
+		break;
+	case SYS_SEEK:
+		break;
+	case SYS_TELL:
+		break;
+	case SYS_CLOSE:
+		break;
+	default:
+		break;
+	}
+
 	printf ("system call!\n");
 	thread_exit ();
 }

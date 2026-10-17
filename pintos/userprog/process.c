@@ -328,6 +328,8 @@ load (const char *file_name, struct intr_frame *if_) {
 	off_t file_ofs;
 	bool success = false;
 	int i;
+	char *token;
+	char *save_ptr;
 
 	/* Allocate and activate page directory. */
 	t->pml4 = pml4_create ();
@@ -336,7 +338,8 @@ load (const char *file_name, struct intr_frame *if_) {
 	process_activate (thread_current ());
 
 	/* Open executable file. */
-	file = filesys_open (file_name);
+	token = strtok_r(file_name, " ", &save_ptr);
+	file = filesys_open (token);
 	if (file == NULL) {
 		printf ("load: %s: open failed\n", file_name);
 		goto done;
@@ -416,6 +419,52 @@ load (const char *file_name, struct intr_frame *if_) {
 
 	/* TODO: Your code goes here.
 	 * TODO: Implement argument passing (see project2/argument_passing.html). */
+
+	if_->rsp = USER_STACK;
+
+	int sum_len = 0;
+	int count = 0;
+	
+	/* 문자열 메모리에 추가 */
+	for(; token != NULL; token = strtok_r(NULL, " ", &save_ptr)) {
+		size_t length = strlen(token) + 1;
+		
+		if_->rsp -= length;
+		sum_len += length;
+		memcpy((void *)if_->rsp, token, length);
+
+		++count;
+	}
+
+	char *ptr = if_->rsp;
+
+	/* 패딩 추가 */
+	if(sum_len != 8) {
+		int padding = (8 - (sum_len % 8)) % 8;
+		if_->rsp -= padding;
+		memset(if_->rsp, 0, padding);
+	}
+	
+	/* NULL */
+	if_->rsp -= 8;
+	memset(if_->rsp, 0, 8);
+
+	/* args 배열 공간 확보 */
+	if_->rsp -= 8 * count;
+
+	/* args 배열 (주소) 채우기 */
+	for(int j = count - 1; j >= 0; --j) {
+		int token_len = strlen(ptr);
+		memcpy((void *)if_->rsp + (j * 8), &ptr, 8);
+		ptr += token_len + 1;
+	}
+
+	/* 가짜 리턴 주소 */
+	if_->rsp -= 8;
+	memset(if_->rsp, 0, 8);
+	
+	if_->R.rdi = count;
+	if_->R.rsi = if_->rsp + 8;
 
 	success = true;
 

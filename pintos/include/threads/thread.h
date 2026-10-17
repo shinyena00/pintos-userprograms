@@ -98,6 +98,8 @@ struct thread {
 
 	int64_t local_tick; 				/* 깨어날 절대시간 */
 
+	uint64_t pml4;						/* pml4 */
+
 	/* Shared between thread.c and synch.c. */
 	struct list_elem elem;              /* List element. */
 	struct lock *wait_lock;                  /* 지금 기다리는 lock. */
